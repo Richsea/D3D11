@@ -1,3 +1,5 @@
-﻿  compilation object save succeeded; see C:\Users\Richsea\Documents\Visual Studio 2015\Projects\Win32Project\Debug\MyPixelShader.cso
-  main.cpp
-  Win32Project.vcxproj -> C:\Users\Richsea\Documents\Visual Studio 2015\Projects\Win32Project\Debug\Win32Project.exe
+﻿  main.cpp
+c:\users\richsea\documents\visual studio 2015\projects\win32project\win32project\main.cpp(148): warning C4838: 'double'에서 'float'(으)로의 변환에는 축소 변환이 필요합니다.
+c:\users\richsea\documents\visual studio 2015\projects\win32project\win32project\main.cpp(148): warning C4244: '초기화 중': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+c:\users\richsea\documents\visual studio 2015\projects\win32project\win32project\main.cpp(152): warning C4244: '초기화 중': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  Win32Project.vcxproj -> C:\Users\Richsea\documents\visual studio 2015\Projects\Win32Project\Debug\Win32Project.exe

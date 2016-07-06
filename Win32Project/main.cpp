@@ -4,6 +4,7 @@
 #include <d3d11.h>
 #include <dxgi.h>
 #include <cstdio>
+#include <math.h>
 
 //////////////////////////////////////////////////////////////////
 
@@ -19,7 +20,19 @@ ID3D11InputLayout * inputLayout;
 ID3D11PixelShader * pixelShader;
 ID3D11Buffer * vertexBuffer;
 
+ID3D11Buffer * constantBuffer;
+
+ID3D11RasterizerState * rasterizerState;
+
 struct MyVertex { float x, y, z; };
+struct MyConstantBuffer { float world[16], view[16], proj[16]; };
+
+#define cot(x) 1/tan(x)
+// row방식으로 벡터를 저장한다.
+void transpose(float v[16]) {
+	float temp[16] = { v[0], v[4], v[8], v[12], v[1], v[5], v[9], v[13], v[2], v[6], v[10], v[14], v[3], v[7], v[11], v[15] };
+	memcpy(v, temp, sizeof(float) * 16);
+}
 
 void ReadData(const char* filename, void** buffer, int* length) {
 	FILE* fp = fopen(filename, "rb");
@@ -31,7 +44,7 @@ void ReadData(const char* filename, void** buffer, int* length) {
 	fclose(fp);
 }
 
-bool InitializeDirect3D ( HWND hWnd )
+bool InitializeDirect3D(HWND hWnd)
 {
 	// TODO: Initializing Direct3D
 	DXGI_SWAP_CHAIN_DESC swapChainDesc = { 0, };
@@ -43,7 +56,7 @@ bool InitializeDirect3D ( HWND hWnd )
 	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	swapChainDesc.Windowed = true;
 
-	if (FAILED(D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0, nullptr, 0, D3D11_SDK_VERSION, 
+	if (FAILED(D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0, nullptr, 0, D3D11_SDK_VERSION,
 		&swapChainDesc, &dxgiSwapChain, &d3dDevice, nullptr, &immediateContext)))
 		return false;
 
@@ -89,12 +102,26 @@ bool InitializeDirect3D ( HWND hWnd )
 	viewport.MaxDepth = 1.0f;
 	immediateContext->RSSetViewports(1, &viewport);
 
+	D3D11_BUFFER_DESC constantBufferDesc = {sizeof(MyConstantBuffer), D3D11_USAGE_DEFAULT, 
+		D3D11_BIND_CONSTANT_BUFFER, 0, 0, 0};
+	d3dDevice->CreateBuffer(&constantBufferDesc, nullptr, &constantBuffer);
+
+	D3D11_RASTERIZER_DESC rasterizerDesc = {};
+	memset(&rasterizerDesc, 0, sizeof(D3D11_RASTERIZER_DESC));
+	rasterizerDesc.FillMode = D3D11_FILL_SOLID;
+	rasterizerDesc.CullMode = D3D11_CULL_NONE;
+	rasterizerDesc.FrontCounterClockwise = false;
+	d3dDevice->CreateRasterizerState(&rasterizerDesc, &rasterizerState);
+
 	return true;
 }
 
 void UninitializeDirect3D ()
 {
 	// TODO: Uninitializing Direct3D
+	rasterizerState->Release();
+	constantBuffer->Release();
+
 	vertexBuffer->Release();
 
 	inputLayout->Release();
@@ -113,7 +140,32 @@ void Loop ()
 	float clearColor[] = { 0x65/255.0f, 0x9C/255.0f, 0xEF/255.0f, 1 };
 	immediateContext->ClearRenderTargetView(renderTargetView, clearColor);
 
+	immediateContext->RSSetState(rasterizerState);
+
+	MyConstantBuffer constantBufferData = { 0, };
+	static float angle = 0;
+	angle += 0.001f;
+	float world[16] = { cos(angle), 0, -sin(angle), 0, 0, 1, 0, 0, sin(angle), 0, cos(angle), 0, 0, 0, 0, 1 };
+	transpose(world);
+	float view[16] = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 };
+	transpose(view);
+	float yScale = cot((3.141592f / 4) / 2);
+	float xScale = yScale / (1280 / 720.0f);
+	float zn = 0.001f, zf = 1000.0f;
+	float proj[16] = { xScale, 0, 0, 0, 0, yScale, 0, 0, 0, 0, zf / (zf - zn), 1, 0, 0, -zn*zf / (zf - zn), 1 };
+	transpose(proj);
+	memcpy(constantBufferData.world, world, sizeof(float) * 16);
+	memcpy(constantBufferData.view, view, sizeof(float) * 16);
+	memcpy(constantBufferData.proj, proj, sizeof(float) * 16);
+	immediateContext->UpdateSubresource(constantBuffer, 0, nullptr, &constantBufferData,
+		sizeof(constantBufferData), 0);
+
+	
 	immediateContext->VSSetShader(vertexShader, nullptr, 0);
+	/*
+	immediateContext->PSSetShader 함수를 이용하여 색을 바꿀 수 있다.
+	*/
+	immediateContext->VSSetConstantBuffers(0, 1, &constantBuffer);
 	immediateContext->PSSetShader(pixelShader, nullptr, 0);
 
 	immediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
