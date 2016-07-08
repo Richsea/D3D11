@@ -1,3 +1,4 @@
+// 201402377 예부해
 struct VERTEX_IN {
 	float3 pos : POSITION;	//행렬을 받음
 	float4 color : COLOR;

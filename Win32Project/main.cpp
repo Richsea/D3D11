@@ -7,7 +7,7 @@
 #include <math.h>
 
 //////////////////////////////////////////////////////////////////
-
+//201402377 ¿¹ºÎÇØ
 // TODO: Global Variables for Direct3D
 ID3D11Device * d3dDevice;
 ID3D11DeviceContext * immediateContext;
