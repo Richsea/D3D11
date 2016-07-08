@@ -29,9 +29,10 @@ ID3D11RasterizerState * rasterizerState;
 ID3D11Texture2D * depthStencilBuffer;
 ID3D11DepthStencilView * depthStencilView;
 
-struct MyVertex { float x, y, z; };
+struct MyVertex {
+	struct { float x, y, z; } pos; struct { float r, g, b, a; } col;
+};
 struct MyConstantBuffer { float world[16], view[16], proj[16]; };
-struct ColorConstantBuffer { float color[4]; };
 
 #define cot(x) 1/tan(x)
 // row방식으로 벡터를 저장한다.
@@ -99,7 +100,7 @@ bool InitializeDirect3D(HWND hWnd)
 	d3dDevice->CreateVertexShader(vertexShaderData, vertexShaderLength, nullptr, &vertexShader);
 	D3D11_INPUT_ELEMENT_DESC inputElementDescs[] = {
 		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		//{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
 	};
 	d3dDevice->CreateInputLayout(inputElementDescs, _countof(inputElementDescs), vertexShaderData, vertexShaderLength, &inputLayout);
 	delete[] vertexShaderData;
@@ -111,9 +112,22 @@ bool InitializeDirect3D(HWND hWnd)
 	delete[] pixelShaderData;
 
 	MyVertex vertices[] = {
-		{ -0.5f, -0.5f, +0.0f },
-		{ +0.0f, +0.5f, +0.0f },
-		{ +0.5f, -0.5f, +0.0f }
+		{ { -0.1f, +0.1f, -0.1f }, { 0xff / 255.0f, 0, 0, 0 } },
+		{ { -0.1f, -0.1f, -0.1f }, { 0xff / 255.0f, 0, 0, 0 } },
+		{ { +0.1f, -0.1f, -0.1f }, { 0xff / 255.0f, 0, 0, 0 } },
+		{ { -0.1f, +0.1f, -0.1f }, { 0xff / 255.0f, 0, 0, 0 } },
+		{ { +0.1f, +0.1f, -0.1f }, { 0xff / 255.0f, 0, 0, 0 } },
+		{ { +0.1f, -0.1f, -0.1f }, { 0xff / 255.0f, 0, 0, 0 } },
+
+		{ { +0.1f, +0.1f, -0.1f }, { 0, 0xff / 255.0f, 0, 0 } },
+		{ { +0.1f, -0.1f, -0.1f }, { 0, 0xff / 255.0f, 0, 0 } },
+		{ { +0.1f, -0.1f, +0.1f }, { 0, 0xff / 255.0f, 0, 0 } },
+		{ { +0.1f, +0.1f, -0.1f }, { 0, 0xff / 255.0f, 0, 0 } },
+		{ { +0.1f, -0.1f, +0.1f }, { 0, 0xff / 255.0f, 0, 0 } },
+		{ { +0.1f, +0.1f, +0.1f }, { 0, 0xff / 255.0f, 0, 0 } },
+
+		{ }
+		
 	};
 	D3D11_BUFFER_DESC vertexBufferDesc = { sizeof(vertices), D3D11_USAGE_DEFAULT, D3D11_BIND_VERTEX_BUFFER, 0, 0, 0 };
 	D3D11_SUBRESOURCE_DATA vertexBufferSubResourceData = { vertices, sizeof(vertices), 0 };
@@ -128,10 +142,6 @@ bool InitializeDirect3D(HWND hWnd)
 	D3D11_BUFFER_DESC constantBufferDesc = {sizeof(MyConstantBuffer), D3D11_USAGE_DEFAULT, 
 		D3D11_BIND_CONSTANT_BUFFER, 0, 0, 0};
 	d3dDevice->CreateBuffer(&constantBufferDesc, nullptr, &constantBuffer);
-
-	D3D11_BUFFER_DESC colorConstantBufferDesc = { sizeof(ColorConstantBuffer), D3D11_USAGE_DEFAULT,
-		D3D11_BIND_CONSTANT_BUFFER, 0, 0, 0 };
-	d3dDevice->CreateBuffer(&colorConstantBufferDesc, nullptr, &pixelConstantBuffer);
 
 	D3D11_RASTERIZER_DESC rasterizerDesc = {};
 	memset(&rasterizerDesc, 0, sizeof(D3D11_RASTERIZER_DESC));
@@ -151,8 +161,6 @@ void UninitializeDirect3D ()
 
 	rasterizerState->Release();
 	constantBuffer->Release();
-
-	pixelConstantBuffer->Release();
 
 	vertexBuffer->Release();
 
@@ -198,16 +206,12 @@ void Loop ()
 	immediateContext->VSSetConstantBuffers(0, 1, &constantBuffer);
 	immediateContext->PSSetShader(pixelShader, nullptr, 0);
 
-	float col[] = {0x65/255.0f, 0x00/255.0f, 0x00/255.0f, 0 };
-	immediateContext->UpdateSubresource(pixelConstantBuffer, 0, nullptr, &col, sizeof(col), 0);
-	immediateContext->PSSetConstantBuffers(0, 1, &pixelConstantBuffer);
-
 	immediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	immediateContext->IASetInputLayout(inputLayout);
 	UINT stride = sizeof(MyVertex), offset = 0;
 	immediateContext->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
 
-	immediateContext->Draw(3, 0);
+	immediateContext->Draw(12, 0);
 
 	dxgiSwapChain->Present(0, 0);
 	// TODO: Rendering
