@@ -30,7 +30,8 @@ ID3D11Texture2D * depthStencilBuffer;
 ID3D11DepthStencilView * depthStencilView;
 
 struct MyVertex {
-	struct { float x, y, z; } pos; struct { float r, g, b, a; } col;
+	struct { float x, y, z; } pos; 
+	struct { float r, g, b, a; } col;
 };
 struct MyConstantBuffer { float world[16], view[16], proj[16]; };
 
@@ -56,7 +57,7 @@ bool InitializeDirect3D(HWND hWnd)
 	// TODO: Initializing Direct3D
 	DXGI_SWAP_CHAIN_DESC swapChainDesc = { 0, };
 	swapChainDesc.BufferCount = 1;
-	swapChainDesc.BufferDesc = { 1280, 720, { 60, 1 }, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED, DXGI_MODE_SCALING_STRETCHED };
+	swapChainDesc.BufferDesc = { 1280, 720,{ 60, 1 }, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED, DXGI_MODE_SCALING_STRETCHED };
 	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	swapChainDesc.OutputWindow = hWnd;
 	swapChainDesc.SampleDesc = { 1, 0 };
@@ -86,7 +87,7 @@ bool InitializeDirect3D(HWND hWnd)
 	depthStencilBufferDesc.SampleDesc.Count = 1;
 	d3dDevice->CreateTexture2D(&depthStencilBufferDesc, nullptr, &depthStencilBuffer);
 
-	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc = { };
+	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc = {};
 	memset(&depthStencilViewDesc, 0, sizeof(D3D11_DEPTH_STENCIL_VIEW_DESC));
 	depthStencilViewDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
@@ -99,8 +100,8 @@ bool InitializeDirect3D(HWND hWnd)
 	ReadData("MyVertexShader.cso", (void**)&vertexShaderData, &vertexShaderLength);
 	d3dDevice->CreateVertexShader(vertexShaderData, vertexShaderLength, nullptr, &vertexShader);
 	D3D11_INPUT_ELEMENT_DESC inputElementDescs[] = {
-		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 	d3dDevice->CreateInputLayout(inputElementDescs, _countof(inputElementDescs), vertexShaderData, vertexShaderLength, &inputLayout);
 	delete[] vertexShaderData;
@@ -126,8 +127,34 @@ bool InitializeDirect3D(HWND hWnd)
 		{ { +0.1f, -0.1f, +0.1f }, { 0, 0xff / 255.0f, 0, 0 } },
 		{ { +0.1f, +0.1f, +0.1f }, { 0, 0xff / 255.0f, 0, 0 } },
 
-		{ }
-		
+		{ { +0.1f, +0.1f, +0.1f }, { 0, 0, 0xff / 255.0f, 0 } },
+		{ { +0.1f, -0.1f, +0.1f }, { 0, 0, 0xff / 255.0f, 0 } },
+		{ { -0.1f, -0.1f, +0.1f }, { 0, 0, 0xff / 255.0f, 0 } },
+		{ { -0.1f, -0.1f, +0.1f }, { 0, 0, 0xff / 255.0f, 0 } },
+		{ { +0.1f, +0.1f, +0.1f }, { 0, 0, 0xff / 255.0f, 0 } },
+		{ { -0.1f, +0.1f, +0.1f }, { 0, 0, 0xff / 255.0f, 0 } },
+
+		{ { -0.1f, -0.1f, +0.1f }, { 0xff / 255.0f, 0xff / 255.0f, 0, 0 } },
+		{ { -0.1f, +0.1f, +0.1f }, { 0xff / 255.0f, 0xff / 255.0f, 0, 0 } },
+		{ { -0.1f, +0.1f, -0.1f }, { 0xff / 255.0f, 0xff / 255.0f, 0, 0 } },
+		{ { -0.1f, +0.1f, -0.1f }, { 0xff / 255.0f, 0xff / 255.0f, 0, 0 } },
+		{ { -0.1f, -0.1f, +0.1f }, { 0xff / 255.0f, 0xff / 255.0f, 0, 0 } },
+		{ { -0.1f, -0.1f, -0.1f }, { 0xff / 255.0f, 0xff / 255.0f, 0, 0 } },
+
+		{ { -0.1f, -0.1f, -0.1f }, { 0xff / 255.0f, 0, 0xff / 255.0f, 0 } },
+		{ { +0.1f, -0.1f, -0.1f }, { 0xff / 255.0f, 0, 0xff / 255.0f, 0 } },
+		{ { -0.1f, -0.1f, +0.1f }, { 0xff / 255.0f, 0, 0xff / 255.0f, 0 } },
+		{ { +0.1f, -0.1f, -0.1f }, { 0xff / 255.0f, 0, 0xff / 255.0f, 0 } },
+		{ { -0.1f, -0.1f, +0.1f }, { 0xff / 255.0f, 0, 0xff / 255.0f, 0 } },
+		{ { +0.1f, -0.1f, +0.1f }, { 0xff / 255.0f, 0, 0xff / 255.0f, 0 } },
+
+		{ { -0.1f, +0.1f, -0.1f }, { 0, 0xff / 255.0f, 0xff / 255.0f, 0 } },
+		{ { -0.1f, +0.1f, +0.1f }, { 0, 0xff / 255.0f, 0xff / 255.0f, 0 } },
+		{ { +0.1f, +0.1f, -0.1f }, { 0, 0xff / 255.0f, 0xff / 255.0f, 0 } },
+		{ { -0.1f, +0.1f, +0.1f }, { 0, 0xff / 255.0f, 0xff / 255.0f, 0 } },
+		{ { +0.1f, +0.1f, -0.1f }, { 0, 0xff / 255.0f, 0xff / 255.0f, 0 } },
+		{ { +0.1f, +0.1f, +0.1f }, { 0, 0xff / 255.0f, 0xff / 255.0f, 0 } }
+
 	};
 	D3D11_BUFFER_DESC vertexBufferDesc = { sizeof(vertices), D3D11_USAGE_DEFAULT, D3D11_BIND_VERTEX_BUFFER, 0, 0, 0 };
 	D3D11_SUBRESOURCE_DATA vertexBufferSubResourceData = { vertices, sizeof(vertices), 0 };
@@ -139,8 +166,8 @@ bool InitializeDirect3D(HWND hWnd)
 	viewport.MaxDepth = 1.0f;
 	immediateContext->RSSetViewports(1, &viewport);
 
-	D3D11_BUFFER_DESC constantBufferDesc = {sizeof(MyConstantBuffer), D3D11_USAGE_DEFAULT, 
-		D3D11_BIND_CONSTANT_BUFFER, 0, 0, 0};
+	D3D11_BUFFER_DESC constantBufferDesc = { sizeof(MyConstantBuffer), D3D11_USAGE_DEFAULT,
+		D3D11_BIND_CONSTANT_BUFFER, 0, 0, 0 };
 	d3dDevice->CreateBuffer(&constantBufferDesc, nullptr, &constantBuffer);
 
 	D3D11_RASTERIZER_DESC rasterizerDesc = {};
@@ -153,7 +180,7 @@ bool InitializeDirect3D(HWND hWnd)
 	return true;
 }
 
-void UninitializeDirect3D ()
+void UninitializeDirect3D()
 {
 	// TODO: Uninitializing Direct3D
 	depthStencilView->Release();
@@ -175,9 +202,9 @@ void UninitializeDirect3D ()
 	dxgiSwapChain->Release();
 }
 
-void Loop ()
+void Loop()
 {
-	float clearColor[] = { 0x65/255.0f, 0x9C/255.0f, 0xEF/255.0f, 1 };
+	float clearColor[] = { 0x65 / 255.0f, 0x9C / 255.0f, 0xEF / 255.0f, 1 };
 	immediateContext->ClearRenderTargetView(renderTargetView, clearColor);
 	immediateContext->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH, 1, 0);
 
@@ -202,7 +229,7 @@ void Loop ()
 		sizeof(constantBufferData), 0);
 
 	immediateContext->VSSetShader(vertexShader, nullptr, 0);
-		
+
 	immediateContext->VSSetConstantBuffers(0, 1, &constantBuffer);
 	immediateContext->PSSetShader(pixelShader, nullptr, 0);
 
@@ -211,7 +238,7 @@ void Loop ()
 	UINT stride = sizeof(MyVertex), offset = 0;
 	immediateContext->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
 
-	immediateContext->Draw(12, 0);
+	immediateContext->Draw(36, 0);
 
 	dxgiSwapChain->Present(0, 0);
 	// TODO: Rendering
@@ -221,65 +248,65 @@ void Loop ()
 //////////////////////////////////////////////////////////////////
 
 #pragma region Precode
-LRESULT CALLBACK WndProc ( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
+LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	switch ( uMsg )
+	switch (uMsg)
 	{
-	case WM_CLOSE: PostQuitMessage ( 0 ); break;
-	default: return DefWindowProc ( hWnd, uMsg, wParam, lParam );
+	case WM_CLOSE: PostQuitMessage(0); break;
+	default: return DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
 	return 0;
 }
 
-HWND InitializeWindow ( int width = 1280, int height = 720 )
+HWND InitializeWindow(int width = 1280, int height = 720)
 {
 	WNDCLASS wndClass = { CS_HREDRAW | CS_VREDRAW, WndProc, 0, 0, nullptr,
-		LoadIcon ( nullptr, IDI_APPLICATION ), LoadCursor ( nullptr, IDC_ARROW ),
-		nullptr, nullptr, TEXT ( "Win32AppWindow" ) };
-	if ( RegisterClass ( &wndClass ) == 0 )
+		LoadIcon(nullptr, IDI_APPLICATION), LoadCursor(nullptr, IDC_ARROW),
+		nullptr, nullptr, TEXT("Win32AppWindow") };
+	if (RegisterClass(&wndClass) == 0)
 		return 0;
 
 	RECT rect = { 0, 0, width, height };
-	AdjustWindowRect ( &rect, WS_OVERLAPPEDWINDOW, false );
+	AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, false);
 	int w = rect.right - rect.left, h = rect.bottom - rect.top;
-	int x = GetSystemMetrics ( SM_CXSCREEN ) / 2 - w / 2, y = GetSystemMetrics ( SM_CYSCREEN ) / 2 - h / 2;
+	int x = GetSystemMetrics(SM_CXSCREEN) / 2 - w / 2, y = GetSystemMetrics(SM_CYSCREEN) / 2 - h / 2;
 
-	return CreateWindow ( TEXT ( "Win32AppWindow" ), TEXT ( "Application" ), WS_OVERLAPPEDWINDOW,
-		x, y, w, h, nullptr, nullptr, GetModuleHandle ( nullptr ), nullptr );
+	return CreateWindow(TEXT("Win32AppWindow"), TEXT("Application"), WS_OVERLAPPEDWINDOW,
+		x, y, w, h, nullptr, nullptr, GetModuleHandle(nullptr), nullptr);
 }
 
-void RunWindow ( HWND hWnd )
+void RunWindow(HWND hWnd)
 {
-	ShowWindow ( hWnd, SW_SHOW );
-	UpdateWindow ( hWnd );
+	ShowWindow(hWnd, SW_SHOW);
+	UpdateWindow(hWnd);
 
 	MSG msg;
-	while ( true )
+	while (true)
 	{
-		if ( PeekMessage ( &msg, nullptr, 0, 0, PM_NOREMOVE ) )
+		if (PeekMessage(&msg, nullptr, 0, 0, PM_NOREMOVE))
 		{
-			if ( !GetMessage ( &msg, nullptr, 0, 0 ) )
+			if (!GetMessage(&msg, nullptr, 0, 0))
 				return;
-			TranslateMessage ( &msg );
-			DispatchMessage ( &msg );
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
 		}
 		else
 		{
-			Loop ();
-			Sleep ( 1 );
+			Loop();
+			Sleep(1);
 		}
 	}
 }
 
-int WINAPI WinMain ( HINSTANCE, HINSTANCE, LPSTR, int )
+int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
-	HWND hWnd = InitializeWindow ();
-	if ( hWnd == nullptr ) return -1;
-	if ( !InitializeDirect3D ( hWnd ) ) return -2;
+	HWND hWnd = InitializeWindow();
+	if (hWnd == nullptr) return -1;
+	if (!InitializeDirect3D(hWnd)) return -2;
 
-	RunWindow ( hWnd );
+	RunWindow(hWnd);
 
-	UninitializeDirect3D ();
+	UninitializeDirect3D();
 
 	return 0;
 }
