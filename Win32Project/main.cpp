@@ -18,14 +18,20 @@ ID3D11RenderTargetView * renderTargetView;
 ID3D11VertexShader * vertexShader;
 ID3D11InputLayout * inputLayout;
 ID3D11PixelShader * pixelShader;
-ID3D11Buffer * vertexBuffer;
+ID3D11Buffer * vertexBuffer;	//화면에 출력되는 정점 리스트
 
-ID3D11Buffer * constantBuffer;
+ID3D11Buffer * constantBuffer;	//셰이더에 필요한 정점을 저장
+
+ID3D11Buffer * pixelConstantBuffer;	//pixel Shader의 색을 변경하기 위한 버퍼
 
 ID3D11RasterizerState * rasterizerState;
 
+ID3D11Texture2D * depthStencilBuffer;
+ID3D11DepthStencilView * depthStencilView;
+
 struct MyVertex { float x, y, z; };
 struct MyConstantBuffer { float world[16], view[16], proj[16]; };
+struct ColorConstantBuffer { float color[4]; };
 
 #define cot(x) 1/tan(x)
 // row방식으로 벡터를 저장한다.
@@ -69,7 +75,23 @@ bool InitializeDirect3D(HWND hWnd)
 
 	backBuffer->Release();
 
-	immediateContext->OMSetRenderTargets(1, &renderTargetView, nullptr);
+	D3D11_TEXTURE2D_DESC depthStencilBufferDesc = { 0, };
+	depthStencilBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	depthStencilBufferDesc.ArraySize = 1;
+	depthStencilBufferDesc.Width = 1280;
+	depthStencilBufferDesc.Height = 720;
+	depthStencilBufferDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthStencilBufferDesc.MipLevels = 1;
+	depthStencilBufferDesc.SampleDesc.Count = 1;
+	d3dDevice->CreateTexture2D(&depthStencilBufferDesc, nullptr, &depthStencilBuffer);
+
+	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc = { };
+	memset(&depthStencilViewDesc, 0, sizeof(D3D11_DEPTH_STENCIL_VIEW_DESC));
+	depthStencilViewDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	d3dDevice->CreateDepthStencilView(depthStencilBuffer, &depthStencilViewDesc, &depthStencilView);
+
+	immediateContext->OMSetRenderTargets(1, &renderTargetView, depthStencilView);
 
 	void * vertexShaderData;
 	int vertexShaderLength;
@@ -77,6 +99,7 @@ bool InitializeDirect3D(HWND hWnd)
 	d3dDevice->CreateVertexShader(vertexShaderData, vertexShaderLength, nullptr, &vertexShader);
 	D3D11_INPUT_ELEMENT_DESC inputElementDescs[] = {
 		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		//{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
 	};
 	d3dDevice->CreateInputLayout(inputElementDescs, _countof(inputElementDescs), vertexShaderData, vertexShaderLength, &inputLayout);
 	delete[] vertexShaderData;
@@ -106,6 +129,10 @@ bool InitializeDirect3D(HWND hWnd)
 		D3D11_BIND_CONSTANT_BUFFER, 0, 0, 0};
 	d3dDevice->CreateBuffer(&constantBufferDesc, nullptr, &constantBuffer);
 
+	D3D11_BUFFER_DESC colorConstantBufferDesc = { sizeof(ColorConstantBuffer), D3D11_USAGE_DEFAULT,
+		D3D11_BIND_CONSTANT_BUFFER, 0, 0, 0 };
+	d3dDevice->CreateBuffer(&colorConstantBufferDesc, nullptr, &pixelConstantBuffer);
+
 	D3D11_RASTERIZER_DESC rasterizerDesc = {};
 	memset(&rasterizerDesc, 0, sizeof(D3D11_RASTERIZER_DESC));
 	rasterizerDesc.FillMode = D3D11_FILL_SOLID;
@@ -119,8 +146,13 @@ bool InitializeDirect3D(HWND hWnd)
 void UninitializeDirect3D ()
 {
 	// TODO: Uninitializing Direct3D
+	depthStencilView->Release();
+	depthStencilBuffer->Release();
+
 	rasterizerState->Release();
 	constantBuffer->Release();
+
+	pixelConstantBuffer->Release();
 
 	vertexBuffer->Release();
 
@@ -139,6 +171,7 @@ void Loop ()
 {
 	float clearColor[] = { 0x65/255.0f, 0x9C/255.0f, 0xEF/255.0f, 1 };
 	immediateContext->ClearRenderTargetView(renderTargetView, clearColor);
+	immediateContext->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH, 1, 0);
 
 	immediateContext->RSSetState(rasterizerState);
 
@@ -160,13 +193,14 @@ void Loop ()
 	immediateContext->UpdateSubresource(constantBuffer, 0, nullptr, &constantBufferData,
 		sizeof(constantBufferData), 0);
 
-	
 	immediateContext->VSSetShader(vertexShader, nullptr, 0);
-	/*
-	immediateContext->PSSetShader 함수를 이용하여 색을 바꿀 수 있다.
-	*/
+		
 	immediateContext->VSSetConstantBuffers(0, 1, &constantBuffer);
 	immediateContext->PSSetShader(pixelShader, nullptr, 0);
+
+	float col[] = {0x65/255.0f, 0x00/255.0f, 0x00/255.0f, 0 };
+	immediateContext->UpdateSubresource(pixelConstantBuffer, 0, nullptr, &col, sizeof(col), 0);
+	immediateContext->PSSetConstantBuffers(0, 1, &pixelConstantBuffer);
 
 	immediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	immediateContext->IASetInputLayout(inputLayout);
